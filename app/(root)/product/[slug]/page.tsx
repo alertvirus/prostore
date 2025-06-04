@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import ProductPrice from "@/components/shared/product/product-price";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProductBySlug } from "@/lib/actions/product.actions";
-import { Button } from "@/components/ui/button";
+//import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ProductImages from "@/components/product/product-images";
 import AddToCart from "@/components/shared/product/add-to-cart";
+import { getMyCart } from "@/lib/actions/cart.actions";
+import { round2 } from "@/lib/utils";
 
 const ProductDetailsPage = async (props: {
   params: Promise<{ slug: string }>;
@@ -13,6 +15,7 @@ const ProductDetailsPage = async (props: {
   const params = await props.params;
   const { slug } = params;
   const product = await getProductBySlug(slug);
+  const cart = await getMyCart();
   if (!product) notFound();
 
   return (
@@ -65,17 +68,19 @@ const ProductDetailsPage = async (props: {
                     <Badge variant="destructive">Unavailable</Badge>
                   )}
                 </div>
-                {
-                product.stock > 0 && (
+                {product.stock > 0 && (
                   <div className=" flex-center">
-                    <AddToCart item={{
-                      productId:product.id,
-                      name:product.name,
-                      slug:product.slug,
-                      price:Number(product.price),
-                      qty:1,
-                      image:product.images![0]
-                    }}/>
+                    <AddToCart
+                      cart = {cart}
+                      item={{
+                        productId: product.id,
+                        name: product.name,
+                        slug: product.slug,
+                        price: round2(product.price),
+                        qty: 1,
+                        image: product.images![0],
+                      }}
+                    />
                   </div>
                 )}
               </CardContent>

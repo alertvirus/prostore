@@ -8,7 +8,7 @@ import { formatError, round2 } from "../utils";
 import { cartItemSchema, insertCartSchema } from "../validator";
 import { prisma } from "@/db/prisma";
 import { CartItem } from "@/types";
-import { Cart, Prisma } from "@prisma/client";
+import {  Prisma } from "@prisma/client";
 import { convertToPlainObject } from "../utils";
 
 const calcPrice = (items: z.infer<typeof cartItemSchema>[]) => {
