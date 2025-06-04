@@ -5,6 +5,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 import { prisma } from "@/db/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const config = {
   pages: {
@@ -55,14 +57,39 @@ export const config = {
     }),
   ],
   callbacks: {
+    authorized({ request, auth }: any) {
+      // Check for cart cookie
+      if (!request.cookies.get("sessionCartId")) {
+        // Generate cart cookie
+        const sessionCartId = crypto.randomUUID();
+
+        // Clone the request headers
+        const newRequestHeaders = new Headers(request.headers);
+
+        // Create a new response and add the new headers
+        const response = NextResponse.next({
+          request: {
+            headers: newRequestHeaders,
+          },
+        });
+
+        // Set the newly generated sessionCartId in the response cookies
+        response.cookies.set("sessionCartId", sessionCartId);
+
+        // Return the response with the sessionCartId set
+        return response;
+      } else {
+        return true;
+      }
+    },
     async jwt({ token, user, trigger, session }: any) {
       // Assign user fields to token
       if (user) {
         token.role = user.role;
 
         // If user has no name, use email as their default name
-        if (user.name === 'NO_NAME') {
-          token.name = user.email!.split('@')[0];
+        if (user.name === "NO_NAME") {
+          token.name = user.email!.split("@")[0];
 
           // Update the user in the database with the new name
           await prisma.user.update({
@@ -73,7 +100,7 @@ export const config = {
       }
 
       // Handle session updates (e.g., name change)
-      if (session?.user.name && trigger === 'update') {
+      if (session?.user.name && trigger === "update") {
         token.name = session.user.name;
       }
 
@@ -85,7 +112,7 @@ export const config = {
       session.user.name = token.name;
       session.user.role = token.role;
       // If there is an update, set the name on the session
-      if (trigger === "update"&& token.name) {
+      if (trigger === "update" && token.name) {
         session.user.name = user.name;
       }
       return session;
